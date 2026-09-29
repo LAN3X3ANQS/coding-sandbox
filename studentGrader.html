@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Grade Report Generator</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-light: #4b5563;
+            --border: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 24px;
+            margin-bottom: 24px;
+        }
+
+        .form-section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 6px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 12px;
+        }
+
+        label {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-light);
+            text-transform: uppercase;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .subject-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Report Output Styles */
+        .report-card {
+            margin-top: 30px;
+            padding: 20px;
+            border: 2px dashed var(--primary);
+            border-radius: 8px;
+            background-color: #faf5ff;
+            display: none;
+        }
+
+        .report-header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+
+        .report-meta {
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f3e8ff;
+            color: var(--primary);
+        }
+
+        .summary {
+            font-size: 14px;
+            line-height: 1.6;
+            font-weight: 600;
+            border-top: 2px solid var(--border);
+            padding-top: 10px;
+        }
+
+        .summary span {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Student Grade Report</h1>
+    <form id="gradeForm">
+        <div class="form-section">
+            <div class="section-title">Student Information</div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="userName">Full Name</label>
+                    <input type="text" id="userName" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="userID">Matric No</label>
+                    <input type="text" id="userID" required placeholder="ENG12345">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-title">Subjects & Grade Points</div>
+            <div id="subjectsContainer">
+                <div class="subject-row">
+                    <div class="form-group">
+                        <label>Subject 1</label>
+                        <input type="text" class="subj-name" required placeholder="e.g. Mathematics">
+                    </div>
+                    <div class="form-group">
+                        <label>Grade Point</label>
+                        <input type="number" class="subj-gp" step="0.01" min="0" max="5" required placeholder="0.00 - 5.00">
+                    </div>
+                </div>
+                <div class="subject-row">
+                    <div class="form-group">
+                        <label>Subject 2</label>
+                        <input type="text" class="subj-name" required placeholder="e.g. Physics">
+                    </div>
+                    <div class="form-group">
+                        <label>Grade Point</label>
+                        <input type="number" class="subj-gp" step="0.01" min="0" max="5" required placeholder="0.00 - 5.00">
+                    </div>
+                </div>
+                <div class="subject-row">
+                    <div class="form-group">
+                        <label>Subject 3</label>
+                        <input type="text" class="subj-name" required placeholder="e.g. Chemistry">
+                    </div>
+                    <div class="form-group">
+                        <label>Grade Point</label>
+                        <input type="number" class="subj-gp" step="0.01" min="0" max="5" required placeholder="0.00 - 5.00">
+                    </div>
+                </div>
+                <div class="subject-row">
+                    <div class="form-group">
+                        <label>Subject 4</label>
+                        <input type="text" class="subj-name" required placeholder="e.g. Computer Science">
+                    </div>
+                    <div class="form-group">
+                        <label>Grade Point</label>
+                        <input type="number" class="subj-gp" step="0.01" min="0" max="5" required placeholder="0.00 - 5.00">
+                    </div>
+                </div>
+                <div class="subject-row">
+                    <div class="form-group">
+                        <label>Subject 5</label>
+                        <input type="text" class="subj-name" required placeholder="e.g. English">
+                    </div>
+                    <div class="form-group">
+                        <label>Grade Point</label>
+                        <input type="number" class="subj-gp" step="0.01" min="0" max="5" required placeholder="0.00 - 5.00">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit">Generate Report</button>
+    </form>
+
+    <div id="reportCard" class="report-card">
+        <div class="report-header">STUDENT GRADE REPORT</div>
+        <div class="report-meta">
+            <div><strong>Name:</strong> <span id="outName"></span></div>
+            <div><strong>Student ID:</strong> <span id="outID"></span></div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Grade Point</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+            <tbody id="reportTableBody">
+                </tbody>
+        </table>
+        <div class="summary">
+            <div>Average Score: <span id="outAverage"></span></div>
+            <div>Highest Score: <span id="outHighest"></span></div>
+            <div>Lowest Score: <span id="outLowest"></span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('gradeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // 1. Get student info
+        const name = document.getElementById('userName').value;
+        const id = document.getElementById('userID').value;
+
+        // 2. Gather subject names and grade points
+        const subjectInputs = document.querySelectorAll('.subj-name');
+        const gpInputs = document.querySelectorAll('.subj-gp');
+
+        let gradePoints = [];
+        let subjects = [];
+
+        for (let i = 0; i < 5; i++) {
+            subjects.push(subjectInputs[i].value);
+            gradePoints.push(parseFloat(gpInputs[i].value) || 0);
+        }
+
+        // 3. Evaluate grades logic matching your C code
+        function evaluateGrade(gp) {
+            if (gp >= 4.0) return 'A';
+            if (gp >= 3.0) return 'B';
+            if (gp >= 2.0) return 'C';
+            if (gp >= 1.0) return 'D';
+            return 'F';
+        }
+
+        // Calculate statistics
+        const sum = gradePoints.reduce((acc, curr) => acc + curr, 0);
+        const average = sum / 5;
+        const highest = Math.max(...gradePoints);
+        const lowest = Math.min(...gradePoints);
+
+        // 4. Render output values
+        document.getElementById('outName').textContent = name;
+        document.getElementById('outID').textContent = id;
+
+        const tbody = document.getElementById('reportTableBody');
+        tbody.innerHTML = ''; // Clear previous results
+
+        for (let i = 0; i < 5; i++) {
+            const letterGrade = evaluateGrade(gradePoints[i]);
+            const row = `
+                <tr>
+                    <td>${subjects[i]}</td>
+                    <td>${gradePoints[i].toFixed(2)}</td>
+                    <td><strong>${letterGrade}</strong></td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        }
+
+        document.getElementById('outAverage').textContent = average.toFixed(2);
+        document.getElementById('outHighest').textContent = highest.toFixed(2);
+        document.getElementById('outLowest').textContent = lowest.toFixed(2);
+
+        // Make the report visible
+        document.getElementById('reportCard').style.display = 'block';
+        
+        // Scroll smoothly to the report card
+        document.getElementById('reportCard').scrollIntoView({ behavior: 'smooth' });
+    });
+</script>
+
+</body>
+</html>

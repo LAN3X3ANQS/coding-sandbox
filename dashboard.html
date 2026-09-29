@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telemetry Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 32px 20px 48px;
+            display: flex;
+            justify-content: center;
+            background:
+                radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 28%),
+                linear-gradient(135deg, #050816 0%, #0b1120 100%);
+            color: #f8fafc;
+        }
+        .dashboard-container {
+            max-width: 1150px;
+            width: 100%;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            padding-bottom: 20px;
+        }
+        .title-area h1 {
+            margin: 0 0 8px;
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #38bdf8, #34d399);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ef4444;
+            transition: all 0.2s ease;
+        }
+        .status-dot.connected {
+            background-color: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+        .hero-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            padding: 20px 24px;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 18px;
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(10px);
+            margin-bottom: 24px;
+            box-shadow: 0 18px 40px rgba(2, 6, 23, 0.25);
+        }
+        .eyebrow {
+            margin: 0 0 6px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #7dd3fc;
+        }
+        .hero-panel h2 {
+            margin: 0 0 10px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .hero-copy {
+            margin: 0;
+            color: #cbd5e1;
+            line-height: 1.5;
+            max-width: 560px;
+        }
+        .hero-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        .status-chip {
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            color: #f8fafc;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            font-size: 13px;
+        }
+        button {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #ffffff;
+            border: none;
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.26);
+            transition: transform 0.1s ease, opacity 0.2s ease;
+        }
+        button:hover {
+            opacity: 0.95;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 22px;
+            margin-bottom: 24px;
+        }
+        .metric-card {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.92));
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            padding: 28px;
+            border-radius: 22px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 24px 40px rgba(2, 6, 23, 0.25);
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+            min-height: 220px;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(125, 211, 252, 0.45);
+            box-shadow: 0 28px 48px rgba(2, 6, 23, 0.35);
+        }
+        .metric-card.warning {
+            background: linear-gradient(145deg, rgba(127, 29, 29, 0.97), rgba(185, 28, 28, 0.9));
+            border-color: rgba(248, 113, 113, 0.45);
+            box-shadow: 0 26px 48px rgba(127, 29, 29, 0.25);
+        }
+        .metric-card.warning::before {
+            background-color: #ef4444;
+        }
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+        .metric-card.temperature::before { background-color: #f87171; }
+        .metric-card.humidity::before { background-color: #38bdf8; }
+        .metric-label {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+        }
+        .metric-value {
+            font-size: 72px;
+            font-weight: 800;
+            color: #ffffff;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(125, 211, 252, 0.22);
+            transition: transform 0.25s ease, text-shadow 0.25s ease;
+        }
+        .metric-card:hover .metric-value {
+            transform: scale(1.03);
+            text-shadow: 0 0 28px rgba(125, 211, 252, 0.3);
+        }
+        .metric-card.updated .metric-value {
+            animation: metricPulse 0.5s ease;
+        }
+        .metric-card.warning .metric-value,
+        .metric-card.warning .metric-secondary {
+            color: #fff1f2;
+        }
+        .metric-secondary {
+            margin-top: 12px;
+            font-size: 16px;
+            color: #cbd5e1;
+            font-weight: 600;
+        }
+        .chart-wrapper {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.92));
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            padding: 18px;
+            border-radius: 22px;
+            box-shadow: 0 24px 40px rgba(2, 6, 23, 0.25);
+            height: 460px;
+        }
+        @keyframes metricPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.04); text-shadow: 0 0 24px rgba(248, 113, 113, 0.35); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 700px) {
+            body { padding: 20px 12px 36px; }
+            header, .hero-panel { flex-direction: column; align-items: flex-start; }
+            .hero-actions { align-items: flex-start; width: 100%; }
+            .metric-value { font-size: 44px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <header>
+        <div class="title-area">
+            <h1>Climate Telemetry Hub</h1>
+            <div class="status-badge">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Disconnected (Hardware Offline)</span>
+            </div>
+        </div>
+        <button id="connectBtn" type="button">Establish Serial Link</button>
+    </header>
+
+    <section class="hero-panel">
+        <div>
+            <p class="eyebrow">Live sensor snapshot</p>
+            <h2>Monitor environmental conditions in real time.</h2>
+            <p class="hero-copy">Switch units instantly, keep an eye on recent trends, and watch humidity stay in range.</p>
+        </div>
+        <div class="hero-actions">
+            <div class="status-chip" id="lastUpdate">Waiting for first reading</div>
+        </div>
+    </section>
+
+    <div class="metrics-grid">
+        <div class="metric-card temperature">
+            <div class="metric-label">Temperature (°F)</div>
+            <div class="metric-value" id="tempDisp">--°F</div>
+            <div class="metric-secondary">Live Fahrenheit reading</div>
+        </div>
+        <div class="metric-card temperature temperature-c">
+            <div class="metric-label">Temperature (°C)</div>
+            <div class="metric-value" id="tempCDisp">--°C</div>
+            <div class="metric-secondary" id="tempAlertText">Normal range</div>
+        </div>
+        <div class="metric-card humidity">
+            <div class="metric-label">Relative Humidity</div>
+            <div class="metric-value" id="humDisp">--%</div>
+            <div class="metric-secondary" id="humTrend">Awaiting sensor input</div>
+        </div>
+    </div>
+
+    <div class="chart-wrapper">
+        <canvas id="telemetryChart"></canvas>
+    </div>
+</div>
+
+<script>
+    let port;
+    let reader;
+    let serialBuffer = "";
+    let lastHumidity = null;
+    let lastTemperatureF = null;
+    let lastTemperatureC = null;
+    let temperatureSeries = [];
+    let humiditySeries = [];
+    let timeLabels = [];
+
+    const connectBtn = document.getElementById('connectBtn');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const tempDisp = document.getElementById('tempDisp');
+    const tempCDisp = document.getElementById('tempCDisp');
+    const humDisp = document.getElementById('humDisp');
+    const humTrend = document.getElementById('humTrend');
+    const tempAlertText = document.getElementById('tempAlertText');
+    const lastUpdateChip = document.getElementById('lastUpdate');
+
+    function setConnectionState(isConnected) {
+        statusDot.classList.toggle('connected', isConnected);
+        statusText.textContent = isConnected ? 'Live Link Active' : 'Disconnected (Hardware Offline)';
+    }
+
+    function updateSummary() {
+        const tempCard = document.querySelector('.metric-card.temperature');
+        const celsiusCard = document.querySelector('.metric-card.temperature-c');
+
+        if (lastTemperatureF !== null) {
+            tempDisp.textContent = `${lastTemperatureF.toFixed(1)}°F`;
+            tempCDisp.textContent = `${lastTemperatureC !== null ? lastTemperatureC.toFixed(1) : ((lastTemperatureF - 32) * 5 / 9).toFixed(1)}°C`;
+            humDisp.textContent = lastHumidity !== null ? `${lastHumidity.toFixed(1)}%` : '--%';
+            humTrend.textContent = lastHumidity !== null
+                ? (lastHumidity >= 50 ? 'Humidity is comfortably balanced' : 'Humidity is trending lower')
+                : 'Awaiting humidity input';
+        } else {
+            tempDisp.textContent = '--°F';
+            tempCDisp.textContent = '--°C';
+            humDisp.textContent = '--%';
+            humTrend.textContent = 'Awaiting sensor input';
+        }
+
+        const isHotAlert = lastTemperatureC !== null && lastTemperatureC >= 30;
+        tempCard.classList.toggle('warning', isHotAlert);
+        celsiusCard.classList.toggle('warning', isHotAlert);
+        tempAlertText.textContent = isHotAlert ? 'Heat alert • 30°C+' : 'Normal range';
+
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        lastUpdateChip.textContent = lastTemperatureF !== null ? `Updated ${timestamp}` : 'Waiting for first reading';
+    }
+
+    function updateChart() {
+        telemetryChart.data.labels = timeLabels;
+        telemetryChart.data.datasets[0].data = temperatureSeries.map(value => value);
+        telemetryChart.update();
+    }
+
+    // Chart configuration mapping real-time streams
+    const ctx = document.getElementById('telemetryChart').getContext('2d');
+    const telemetryChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Temperature (°F)',
+                    data: [],
+                    borderColor: '#f87171',
+                    backgroundColor: 'rgba(248, 113, 113, 0.05)',
+                    borderWidth: 3,
+                    pointRadius: 2,
+                    tension: 0.4,
+                    yAxisID: 'yTemp'
+                },
+                {
+                    label: 'Humidity (%)',
+                    data: [],
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56, 189, 248, 0.05)',
+                    borderWidth: 3,
+                    pointRadius: 2,
+                    tension: 0.4,
+                    yAxisID: 'yHum'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    grid: { color: '#1f2937', borderColor: '#1f2937' },
+                    ticks: { color: '#9ca3af', font: { size: 11 } }
+                },
+                yTemp: {
+                    type: 'linear',
+                    position: 'left',
+                    title: { display: true, text: 'Temperature (°F)', color: '#f87171', font: { weight: 'bold' } },
+                    grid: { color: '#1f2937', borderColor: '#1f2937' },
+                    ticks: { color: '#9ca3af' }
+                },
+                yHum: {
+                    type: 'linear',
+                    position: 'right',
+                    title: { display: true, text: 'Humidity (%)', color: '#38bdf8', font: { weight: 'bold' } },
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: '#9ca3af' }
+                }
+            },
+            plugins: {
+                legend: { labels: { color: '#f3f4f6', font: { size: 13, weight: '500' } } }
+            }
+        }
+    });
+
+    connectBtn.addEventListener('click', async () => {
+        if ('serial' in navigator) {
+            try {
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 9600 });
+
+                setConnectionState(true);
+                connectBtn.textContent = 'Connected';
+                connectBtn.disabled = true;
+
+                const textDecoder = new TextDecoderStream();
+                const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+                reader = textDecoder.readable.getReader();
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    serialBuffer += value;
+                    const lines = serialBuffer.split(/\r\n|\n|\r/);
+                    serialBuffer = lines.pop();
+
+                    for (let line of lines) {
+                        parseIncomingStream(line.trim());
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                setConnectionState(false);
+                connectBtn.disabled = false;
+                connectBtn.textContent = 'Establish Serial Link';
+                alert('Port access denied. Ensure the Arduino IDE Serial Monitor window is completely closed.');
+            }
+        } else {
+            alert('Web Serial is unsupported by your browser. Please execute this file using Google Chrome or Microsoft Edge.');
+        }
+    });
+
+    function parseIncomingStream(line) {
+        if (!line) return;
+
+        const normalized = line.replace(/\r/g, '').trim();
+        if (!normalized) return;
+
+        let humidity = null;
+        let tempF = null;
+        let tempC = null;
+
+        const humidityLabelMatch = normalized.match(/(?:humidity|rh|relative humidity|h)\s*[:=]?\s*([0-9.]+)\s*%?/i);
+        if (humidityLabelMatch) {
+            humidity = parseFloat(humidityLabelMatch[1]);
+        }
+
+        const tempLabelMatch = normalized.match(/(?:temp(?:erature)?|t)\s*[:=]?\s*([0-9.]+)\s*(?:°?\s*([fc]))?/i);
+        if (tempLabelMatch) {
+            const rawTemp = parseFloat(tempLabelMatch[1]);
+            const unit = (tempLabelMatch[2] || '').toLowerCase();
+            if (unit === 'c') {
+                tempC = rawTemp;
+                tempF = (rawTemp * 9 / 5) + 32;
+            } else {
+                tempF = rawTemp;
+                tempC = (rawTemp - 32) * 5 / 9;
+            }
+        }
+
+        if (tempF === null) {
+            const tempFallbackMatch = normalized.match(/([0-9.]+)\s*(?:°\s*)?([fc])\b/i);
+            if (tempFallbackMatch) {
+                const rawTemp = parseFloat(tempFallbackMatch[1]);
+                const unit = (tempFallbackMatch[2] || '').toLowerCase();
+                if (unit === 'c') {
+                    tempC = rawTemp;
+                    tempF = (rawTemp * 9 / 5) + 32;
+                } else {
+                    tempF = rawTemp;
+                    tempC = (rawTemp - 32) * 5 / 9;
+                }
+            }
+        }
+
+        if (humidity === null) {
+            const percentMatch = normalized.match(/([0-9.]+)\s*%/i);
+            if (percentMatch) {
+                humidity = parseFloat(percentMatch[1]);
+            }
+        }
+
+        const numberMatches = normalized.match(/-?[0-9.]+/g) || [];
+        const numbers = numberMatches.map((value) => parseFloat(value));
+
+        if (tempF === null && humidity === null && numbers.length >= 2) {
+            tempF = numbers[0];
+            humidity = numbers[1];
+            tempC = (tempF - 32) * 5 / 9;
+        } else if (tempF === null && humidity !== null && numbers.length >= 1) {
+            const candidate = numbers[0];
+            if (candidate >= -60 && candidate <= 140) {
+                tempF = candidate;
+                tempC = (tempF - 32) * 5 / 9;
+            }
+        } else if (tempF !== null && humidity === null && numbers.length >= 1) {
+            const candidate = numbers[0];
+            if (candidate >= 0 && candidate <= 100) {
+                humidity = candidate;
+            }
+        }
+
+        if (humidity !== null) {
+            lastHumidity = humidity;
+        }
+
+        if (tempF !== null) {
+            lastTemperatureF = tempF;
+            lastTemperatureC = tempC !== null ? tempC : (tempF - 32) * 5 / 9;
+
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            timeLabels.push(timestamp);
+            temperatureSeries.push(lastTemperatureF);
+            humiditySeries.push(lastHumidity !== null ? lastHumidity : humiditySeries[humiditySeries.length - 1] || 0);
+
+            const metricCards = document.querySelectorAll('.metric-card');
+            metricCards.forEach((card) => card.classList.remove('updated'));
+            if (metricCards.length) {
+                metricCards[0].classList.add('updated');
+                metricCards[1].classList.add('updated');
+            }
+
+            if (timeLabels.length > 24) {
+                timeLabels.shift();
+                temperatureSeries.shift();
+                humiditySeries.shift();
+            }
+
+            telemetryChart.data.datasets[1].data = humiditySeries;
+            updateChart();
+        }
+
+        updateSummary();
+    }
+</script>
+</body>
+</html>

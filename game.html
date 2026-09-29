@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hardware Joystick Endless Runner</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #11111b;
+      background-color: #a6e3a1;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 15px;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: #94e2d5;
+    }
+
+    #gameCanvas {
+      background-color: #181825;
+      border: 3px solid #89b4fa;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .instructions {
+      margin-top: 15px;
+      font-size: 16px;
+      color: #a6adc8;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Dino Endless Runner (Hardware Powered)</h1>
+  <button id="connect-btn">Connect Arduino USB</button>
+
+  <canvas id="gameCanvas" width="800" height="300"></canvas>
+
+  <div class="instructions">
+    <p>Push Joystick <strong>UP / RIGHT</strong> to Jump!</p>
+    <p>Score: <span id="scoreText">0</span> | High Score: <span id="highScoreText">0</span></p>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const connectBtn = document.getElementById('connect-btn');
+    const scoreText = document.getElementById('scoreText');
+    const highScoreText = document.getElementById('highScoreText');
+
+    let port, reader;
+    let gameRunning = false;
+    let score = 0;
+    let highScore = 0;
+    let gameSpeed = 5;
+
+    // Player (Dino replacement)
+    const player = {
+      x: 80,
+      y: 220,
+      width: 40,
+      height: 50,
+      color: '#a6e3a1',
+      velocityY: 0,
+      gravity: 0.8,
+      jumping: false,
+      groundY: 220
+    };
+
+    // Obstacles
+    let obstacles = [];
+    let frameCount = 0;
+
+    function jump() {
+      if (!player.jumping) {
+        player.velocityY = -14;
+        player.jumping = true;
+      }
+    }
+
+    function resetGame() {
+      obstacles = [];
+      score = 0;
+      gameSpeed = 5;
+      player.y = player.groundY;
+      player.velocityY = 0;
+      player.jumping = false;
+      gameRunning = true;
+    }
+
+    function spawnObstacle() {
+      const height = Math.floor(Math.random() * 30) + 30; // 30px to 60px height
+      obstacles.push({
+        x: canvas.width,
+        y: canvas.height - 30 - height,
+        width: 20,
+        height: height,
+        color: '#f38ba8'
+      });
+    }
+
+    function update() {
+      if (!gameRunning) return;
+
+      frameCount++;
+      score++;
+      scoreText.textContent = Math.floor(score / 5);
+
+      if (score / 5 > highScore) {
+        highScore = Math.floor(score / 5);
+        highScoreText.textContent = highScore;
+      }
+
+      // Increase game speed over time
+      if (frameCount % 300 === 0) gameSpeed += 0.5;
+
+      // Player Physics
+      player.velocityY += player.gravity;
+      player.y += player.velocityY;
+
+      if (player.y >= player.groundY) {
+        player.y = player.groundY;
+        player.jumping = false;
+      }
+
+      // Spawn obstacles periodically
+      if (frameCount % Math.max(60, Math.floor(120 - gameSpeed * 5)) === 0) {
+        spawnObstacle();
+      }
+
+      // Move and check obstacles
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        obstacles[i].x -= gameSpeed;
+
+        // Collision detection
+        if (
+          player.x < obstacles[i].x + obstacles[i].width &&
+          player.x + player.width > obstacles[i].x &&
+          player.y < obstacles[i].y + obstacles[i].height &&
+          player.y + player.height > obstacles[i].y
+        ) {
+          gameRunning = false; // Game Over
+        }
+
+        // Remove off-screen obstacles
+        if (obstacles[i].x + obstacles[i].width < 0) {
+          obstacles.splice(i, 1);
+        }
+      }
+    }
+
+    function draw() {
+      // Clear Canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw Ground
+      ctx.fillStyle = '#45475a';
+      ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+
+      // Draw Player
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      // Draw Eyes on Player
+      ctx.fillStyle = '#11111b';
+      ctx.fillRect(player.x + 25, player.y + 10, 6, 6);
+
+      // Draw Obstacles
+      for (let obs of obstacles) {
+        ctx.fillStyle = obs.color;
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+      }
+
+      // Game Over Screen
+      if (!gameRunning) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#cdd6f4';
+        ctx.font = '28px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 10);
+        ctx.font = '18px sans-serif';
+        ctx.fillText('Move Joystick UP/RIGHT to Restart', canvas.width / 2, canvas.height / 2 + 25);
+      }
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Serial Communication with Arduino
+    connectBtn.addEventListener('click', async () => {
+      if ('serial' in navigator) {
+        try {
+          port = await navigator.serial.requestPort();
+          await port.open({ baudRate: 9600 });
+          connectBtn.innerText = "Connected!";
+          connectBtn.style.backgroundColor = "#89b4fa";
+          resetGame();
+          readSerialData();
+        } catch (err) {
+          alert("Serial connection failed: " + err);
+        }
+      } else {
+        alert("Web Serial API not supported! Please use Google Chrome or Edge.");
+      }
+    });
+
+    async function readSerialData() {
+      const textDecoder = new TextDecoderStream();
+      const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+      reader = textDecoder.readable.getReader();
+
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += value;
+        let lines = buffer.split("\n");
+        buffer = lines.pop();
+
+        for (let line of lines) {
+          try {
+            let data = JSON.parse(line.trim());
+            
+            // Check joystick movement (Threshold check for jump)
+            if (data.x > 700 || data.y < 300) { 
+              if (!gameRunning) {
+                resetGame();
+              } else {
+                jump();
+              }
+            }
+          } catch (e) {}
+        }
+      }
+    }
+
+    // Start rendering loop
+    gameLoop();
+  </script>
+</body>
+</html>

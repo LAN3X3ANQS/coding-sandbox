@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python From Zero</title>
+<style>
+:root{--bg:#f7f8fa;--card:#fff;--text:#17202a;--muted:#667085;--accent:#3776ab;--accent2:#ffd343;--border:#e5e7eb;--code:#111827;--good:#15803d}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+header{background:#111827;color:white;padding:34px 20px} header .wrap{max-width:1100px;margin:auto}
+header h1{margin:0 0 8px;font-size:2.2rem} header p{margin:0;color:#d1d5db}
+.layout{display:grid;grid-template-columns:260px 1fr;max-width:1100px;margin:auto;min-height:calc(100vh - 130px)}
+aside{padding:24px 14px;border-right:1px solid var(--border);position:sticky;top:0;height:calc(100vh - 0px);overflow:auto}
+aside button{width:100%;text-align:left;border:0;background:transparent;padding:11px 12px;border-radius:8px;cursor:pointer;color:#344054;margin:2px 0}
+aside button:hover,aside button.active{background:#e8f1f8;color:#1d5f8f;font-weight:700}
+main{padding:34px 38px 70px}.lesson{display:none}.lesson.active{display:block}
+h2{font-size:1.8rem;margin-top:0} h3{margin-top:30px}.lead{font-size:1.05rem;color:#475467;line-height:1.7}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin:20px 0}
+.code{background:var(--code);color:#e5e7eb;border-radius:10px;padding:18px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;line-height:1.6;white-space:pre}
+.code .comment{color:#94a3b8}.tip{border-left:4px solid var(--accent);background:#eef6fc;padding:14px 16px;border-radius:8px;margin:18px 0}.warn{border-left:4px solid #f59e0b;background:#fffbeb;padding:14px 16px;border-radius:8px}
+.exercise{background:#f8fafc;border:1px dashed #b7c1cc;border-radius:12px;padding:18px;margin-top:20px}
+textarea{width:100%;min-height:130px;border:1px solid #cbd5e1;border-radius:8px;padding:12px;font-family:monospace;resize:vertical}
+button.action{background:var(--accent);color:white;border:0;border-radius:8px;padding:10px 16px;cursor:pointer;margin-top:10px}
+.result{margin-top:10px;font-weight:600}.progress{height:8px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin:15px 0}.bar{height:100%;width:0;background:var(--accent);transition:.25s}
+.quiz label{display:block;padding:9px;margin:6px 0;background:#f8fafc;border-radius:8px;cursor:pointer}.quiz button{margin-top:12px}
+.nav{display:flex;justify-content:space-between;margin-top:35px;border-top:1px solid var(--border);padding-top:20px}
+.small{font-size:.9rem;color:var(--muted)}
+@media(max-width:760px){.layout{display:block}aside{position:relative;height:auto;border-right:0;border-bottom:1px solid var(--border)}main{padding:25px 18px}header h1{font-size:1.8rem}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1>Python From Zero 🐍</h1>
+<p>A step-by-step path from <code>print()</code> to NumPy and Pandas.</p>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<p class="small" id="progressText">Lesson 1 of 12</p>
+</div></header>
+
+<div class="layout">
+<aside id="menu"></aside>
+<main>
+
+<section class="lesson active">
+<h2>1. Your first Python program</h2>
+<p class="lead">Before variables, loops or libraries, you need to understand the basic idea: Python executes instructions from your code.</p>
+<div class="card"><h3>The print statement</h3><div class="code">print("Hello, world!")</div><p>Run it and Python displays:</p><div class="code">Hello, world!</div></div>
+<div class="tip"><b>Think of print()</b> as telling Python: “Put this information on the screen.”</div>
+<div class="card"><h3>Printing different things</h3><div class="code">print("Lanre")
+print(10)
+print(10 + 5)
+print("My score is", 90)</div></div>
+<div class="exercise"><b>Try it</b><p>Write a program that prints your name, your age and the result of 20 + 22.</p><textarea placeholder='Example: print("Lanre")'></textarea></div>
+</section>
+
+<section class="lesson">
+<h2>2. Values, strings and numbers</h2>
+<p class="lead">Python works with different kinds of values. Two important ones at this stage are text and numbers.</p>
+<div class="card"><h3>Strings</h3><div class="code">"Hello"
+"Lanre"
+"240211185"</div><p>Text is normally written inside quotation marks.</p></div>
+<div class="card"><h3>Numbers</h3><div class="code">10      # integer
+3.14    # decimal / float
+10 + 5
+20 - 7
+4 * 3
+10 / 2</div></div>
+<div class="tip">Notice that <code>"10"</code> and <code>10</code> are not the same thing. The first is text; the second is a number.</div>
+</section>
+
+<section class="lesson">
+<h2>3. Variables</h2>
+<p class="lead">A variable gives a name to a value so you can use that value later.</p>
+<div class="code">x = 10
+name = "Lanre"
+
+print(x)
+print(name)</div>
+<p><code>=</code> here means “assign this value to this variable.”</p>
+<div class="card"><h3>Changing a variable</h3><div class="code">score = 50
+print(score)
+
+score = 80
+print(score)</div></div>
+<div class="exercise"><b>Practice</b><p>Create variables for your name, age and a favourite number. Print all three.</p></div>
+</section>
+
+<section class="lesson">
+<h2>4. Lists</h2>
+<p class="lead">A list stores multiple values in one ordered collection.</p>
+<div class="code">numbers = [10, 20, 30, 40]
+
+print(numbers)
+print(numbers[0])
+print(numbers[2])</div>
+<div class="tip">Python starts counting list positions from <b>0</b>. So <code>numbers[0]</code> is 10.</div>
+<div class="card"><h3>Changing a list</h3><div class="code">numbers.append(50)
+numbers.remove(20)
+
+print(numbers)</div></div>
+</section>
+
+<section class="lesson">
+<h2>5. Loops</h2>
+<p class="lead">A loop lets you repeat an operation without writing the same instruction over and over.</p>
+<div class="code">numbers = [10, 20, 30, 40]
+
+for number in numbers:
+    print(number)</div>
+<p>Read this as: “For each <code>number</code> inside <code>numbers</code>, print the number.”</p>
+<div class="card"><h3>Another example</h3><div class="code">names = ["Ada", "John", "Mary"]
+
+for name in names:
+    print("Hello", name)</div></div>
+</section>
+
+<section class="lesson">
+<h2>6. Conditions</h2>
+<p class="lead">Conditions allow your program to make decisions.</p>
+<div class="code">x = 10
+
+if x > 5:
+    print("Greater than 5")</div>
+<div class="card"><h3>Comparisons</h3><div class="code">x == 10   # equal to
+x != 10   # not equal
+x > 5
+x < 5
+x >= 5
+x <= 5</div></div>
+<div class="card"><h3>if / else</h3><div class="code">age = 20
+
+if age >= 18:
+    print("Adult")
+else:
+    print("Under 18")</div></div>
+</section>
+
+<section class="lesson">
+<h2>7. Functions</h2>
+<p class="lead">A function is a reusable block of code designed to perform a particular task.</p>
+<div class="code">def add(a, b):
+    return a + b
+
+result = add(3, 4)
+print(result)</div>
+<p><code>a</code> and <code>b</code> are parameters. <code>return</code> sends a result back.</p>
+<div class="tip">Functions become especially useful when your programs get larger: instead of putting everything inside one giant block, you divide the program into logical pieces.</div>
+</section>
+
+<section class="lesson">
+<h2>8. Dictionaries</h2>
+<p class="lead">A dictionary stores information as key-value pairs.</p>
+<div class="code">student = {
+    "name": "John",
+    "age": 20
+}
+
+print(student["name"])
+print(student["age"])</div>
+<div class="card"><h3>Why this is useful</h3><p>A student has several pieces of information. Instead of remembering that position 0 means a name and position 1 means age, the dictionary lets you ask for the value by its key.</p></div>
+<div class="code">student["score"] = 85
+print(student)</div>
+</section>
+
+<section class="lesson">
+<h2>9. Putting the basics together</h2>
+<p class="lead">Now combine variables, lists, loops, conditions, functions and dictionaries into a small program.</p>
+<div class="code">students = [
+    {"name": "Ada", "score": 85},
+    {"name": "John", "score": 62},
+    {"name": "Mary", "score": 91}
+]
+
+def passed(score):
+    return score >= 50
+
+for student in students:
+    if passed(student["score"]):
+        print(student["name"], "passed")
+    else:
+        print(student["name"], "failed")</div>
+<div class="tip">This is the point where the individual concepts begin to become programming rather than isolated syntax.</div>
+</section>
+
+<section class="lesson">
+<h2>10. Importing libraries</h2>
+<p class="lead">Python's standard language is powerful, but libraries give you extra tools written by other developers.</p>
+<div class="code">import numpy as np
+import pandas as pd</div>
+<p><code>as np</code> and <code>as pd</code> create shorter names for the libraries.</p>
+<div class="card"><h3>Using the imported library</h3><div class="code">import numpy as np
+
+data = np.array([1, 2, 3, 4])
+print(data)</div></div>
+</section>
+
+<section class="lesson">
+<h2>11. NumPy basics</h2>
+<p class="lead">NumPy is a major Python library for numerical computing. Its central object is the array.</p>
+<div class="code">import numpy as np
+
+data = np.array([1, 2, 3, 4])
+
+print(data)
+print(data + 10)
+print(data * 2)
+print(data.mean())</div>
+<div class="tip">The important idea is not just the syntax. NumPy lets you work efficiently with collections of numbers and perform mathematical operations on them.</div>
+<div class="card"><h3>Array shape</h3><div class="code">data = np.array([1, 2, 3, 4])
+
+print(data.shape)</div></div>
+</section>
+
+<section class="lesson">
+<h2>12. Pandas basics</h2>
+<p class="lead">Pandas is designed for working with structured data such as tables.</p>
+<div class="code">import pandas as pd
+
+df = pd.DataFrame({
+    "Name": ["A", "B", "C"],
+    "Score": [70, 80, 90]
+})
+
+print(df)</div>
+<div class="card"><h3>Working with columns</h3><div class="code">print(df["Name"])
+print(df["Score"])
+
+print(df["Score"].mean())</div></div>
+<div class="card"><h3>🎯 You have reached the target</h3>
+<p>You can now understand every major concept in your original example:</p>
+<div class="code">x = 10
+name = "Lanre"
+
+numbers = [10, 20, 30, 40]
+
+for number in numbers:
+    print(number)
+
+if x > 5:
+    print("Greater than 5")
+
+def add(a, b):
+    return a + b
+
+student = {
+    "name": "John",
+    "age": 20
+}
+
+import numpy as np
+import pandas as pd
+
+data = np.array([1, 2, 3, 4])
+
+df = pd.DataFrame({
+    "Name": ["A", "B", "C"],
+    "Score": [70, 80, 90]
+})</div></div>
+</section>
+
+<div class="nav"><button class="action" id="prev">← Previous</button><button class="action" id="next">Next →</button></div>
+</main></div>
+
+<script>
+const lessons=[...document.querySelectorAll('.lesson')];
+const menu=document.getElementById('menu');
+const names=["Print & first program","Values & strings","Variables","Lists","Loops","Conditions","Functions","Dictionaries","Putting it together","Importing libraries","NumPy","Pandas"];
+let current=0;
+names.forEach((name,i)=>{let b=document.createElement('button');b.textContent=(i+1)+". "+name;b.onclick=()=>show(i);menu.appendChild(b)});
+function show(i){
+ current=Math.max(0,Math.min(lessons.length-1,i));
+ lessons.forEach((x,j)=>x.classList.toggle('active',j===current));
+ [...menu.children].forEach((x,j)=>x.classList.toggle('active',j===current));
+ document.getElementById('prev').disabled=current===0;
+ document.getElementById('next').disabled=current===lessons.length-1;
+ document.getElementById('bar').style.width=((current+1)/lessons.length*100)+"%";
+ document.getElementById('progressText').textContent=`Lesson ${current+1} of ${lessons.length}`;
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+document.getElementById('prev').onclick=()=>show(current-1);
+document.getElementById('next').onclick=()=>show(current+1);
+show(0);
+</script>
+</body>
+</html>

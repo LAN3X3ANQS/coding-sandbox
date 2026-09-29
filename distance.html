@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proximity Shield Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #121214;
+            --card-bg: #1a1a1e;
+            --text-main: #ffffff;
+            --text-muted: #a0a0ab;
+            --safe-color: #00ff88;
+            --warn-color: #ffaa00;
+            --danger-color: #ff3344;
+            --current-zone: #27272a;
+            --current-glow: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .dashboard {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            text-align: center;
+            width: 400px;
+            border: 1px solid #2d2d34;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .status-text {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        /* The Radar/Shield Visualizer Layout */
+        .shield-visualizer {
+            position: relative;
+            width: 300px;
+            height: 180px;
+            margin: 0 auto 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        /* Base arc styling using nested borders */
+        .arc {
+            position: absolute;
+            border: 8px solid var(--current-zone);
+            border-bottom: none;
+            border-left: color-mix(in srgb, var(--current-zone) 50%, transparent);
+            border-right: color-mix(in srgb, var(--current-zone) 50%, transparent);
+            border-radius: 150px 150px 0 0;
+            transform-origin: bottom center;
+            transition: border-color 0.2s ease, filter 0.2s ease;
+        }
+
+        /* Arc Sizing (Concentric Rings) */
+        .arc-outer { width: 280px; height: 140px; z-index: 1; }
+        .arc-mid   { width: 200px; height: 100px; z-index: 2; }
+        .arc-inner { width: 120px; height: 60px;  z-index: 3; }
+
+        .sensor-node {
+            width: 30px;
+            height: 15px;
+            background: #3f3f46;
+            border-radius: 15px 15px 0 0;
+            z-index: 4;
+        }
+
+        /* Dynamic Active States triggered by JS */
+        .active-safe {
+            border-color: var(--safe-color);
+            filter: drop-shadow(0px 0px 8px rgba(0, 255, 136, 0.6));
+        }
+        .active-warn {
+            border-color: var(--warn-color);
+            filter: drop-shadow(0px 0px 8px rgba(255, 170, 0, 0.6));
+        }
+        .active-danger {
+            border-color: var(--danger-color);
+            filter: drop-shadow(0px 0px 12px rgba(255, 51, 68, 0.8));
+            animation: pulse-danger 0.4s infinite alternate;
+        }
+
+        @keyframes pulse-danger {
+            from { opacity: 1; }
+            to { opacity: 0.7; }
+        }
+
+        /* Readout Metrics */
+        .readout {
+            margin-top: 20px;
+        }
+
+        .distance-val {
+            font-size: 3.5rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            transition: color 0.2s ease;
+        }
+
+        .unit {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-left: 5px;
+        }
+
+        /* Action Button */
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn:hover { background: #2563eb; transform: translateY(-1px); }
+        .btn:disabled {
+            background: #27272a;
+            color: var(--text-muted);
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <h1>Proximity Shield</h1>
+        <div class="status-text" id="status">Device disconnected</div>
+
+        <div class="shield-visualizer">
+            <div class="arc arc-outer" id="arc3"></div>
+            <div class="arc arc-mid" id="arc2"></div>
+            <div class="arc arc-inner" id="arc1"></div>
+            <div class="sensor-node"></div>
+        </div>
+
+        <div class="readout">
+            <div class="distance-val" id="distanceDisplay">--<span class="unit">cm</span></div>
+        </div>
+
+        <button class="btn" id="connectBtn">Connect to Radar</button>
+    </div>
+
+    <script>
+        const connectBtn = document.getElementById('connectBtn');
+        const statusText = document.getElementById('status');
+        const distanceDisplay = document.getElementById('distanceDisplay');
+        
+        const arc1 = document.getElementById('arc1');
+        const arc2 = document.getElementById('arc2');
+        const arc3 = document.getElementById('arc3');
+
+        let audioCtx = null;
+        let nextBeepTime = 0;
+        let beepInterval = 0; // ms between beeps. 0 means silence.
+
+        // Initialize Web Audio
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                playBeepLoop();
+            }
+        }
+
+        // Recursive timing loop for custom adaptive beeping
+        function playBeepLoop() {
+            const now = audioCtx.currentTime;
+            if (beepInterval > 0) {
+                // Generate a short diagnostic beep tone
+                let osc = audioCtx.createOscillator();
+                let gainNode = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                // Higher pitch when closer
+                osc.frequency.setValueAtTime(beepInterval < 200 ? 1200 : 880, now); 
+                
+                gainNode.gain.setValueAtTime(0.15, now);
+                // Sharp decay so it sounds like a clean click/beep
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                osc.start(now);
+                osc.stop(now + 0.09);
+                
+                setTimeout(playBeepLoop, beepInterval);
+            } else {
+                // Check back frequently if silenced until a new value triggers it
+                setTimeout(playBeepLoop, 100);
+            }
+        }
+
+        // Web Serial Processing
+        connectBtn.addEventListener('click', async () => {
+            try {
+                const port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 9600 });
+                
+                initAudio();
+                
+                connectBtn.textContent = "System Active";
+                connectBtn.disabled = true;
+                statusText.textContent = "Streaming telemetry data...";
+
+                const textDecoder = new TextDecoderStream();
+                const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+                const reader = textDecoder.readable.getReader();
+
+                let buffer = '';
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) { break; }
+                    if (value) {
+                        buffer += value;
+                        if (buffer.includes('\n')) {
+                            processData(buffer.trim());
+                            buffer = '';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                statusText.textContent = "Connection aborted.";
+            }
+        });
+
+        // UI Manipulation State Engine
+        function processData(line) {
+            // Extracts numbers from the format "Distance: XX cm"
+            const match = line.match(/Distance:\s*([\d.]+)/);
+            if (!match) return;
+
+            const distance = parseFloat(match[1]);
+            distanceDisplay.innerHTML = `${distance.toFixed(1)}<span class="unit">cm</span>`;
+
+            // Reset all visual classes first
+            [arc1, arc2, arc3].forEach(arc => {
+                arc.className = arc.className.replace(/\bactive-\S+/g, '');
+            });
+
+            // State Logic Rules based on distance thresholds
+            if (distance <= 15) {
+                // Zone 1: Critical Proximity
+                arc1.classList.add('active-danger');
+                distanceDisplay.style.color = 'var(--danger-color)';
+                beepInterval = 80; // Rapid fire beeping
+            } 
+            else if (distance > 15 && distance <= 35) {
+                // Zone 2: Warning Proximity
+                arc1.classList.add('active-warn');
+                arc2.classList.add('active-warn');
+                distanceDisplay.style.color = 'var(--warn-color)';
+                beepInterval = 300; // Moderate pacing
+            } 
+            else if (distance > 35 && distance <= 60) {
+                // Zone 3: Safe Proximity Notice
+                arc1.classList.add('active-safe');
+                arc2.classList.add('active-safe');
+                arc3.classList.add('active-safe');
+                distanceDisplay.style.color = 'var(--safe-color)';
+                beepInterval = 700; // Slow pacing
+            } 
+            else {
+                // Out of target boundaries
+                distanceDisplay.style.color = 'var(--text-main)';
+                beepInterval = 0; // Quiet zone
+            }
+        }
+    </script>
+</body>
+</html>
