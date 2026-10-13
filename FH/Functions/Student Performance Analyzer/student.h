@@ -1,0 +1,11 @@
+int getmathematicsScore(void);
+int getphysicsScore(void);
+int getchemistryScore(void);
+int getenglishScore(void);
+int getelectronicsScore(void);
+int calculateTotal(int mathematicsScore, int physicsScore, int chemistryScore, int englishScore, int electronicsScore);
+int calculateAverage(int totalScore);
+int findHighest(int mathematicsScore, int physicsScore, int chemistryScore, int englishScore, int electronicsScore);
+int findLowest(int mathematicsScore, int physicsScore, int chemistryScore, int englishScore, int electronicsScore);
+int calculateGrade( int percentage , int totalScore);
+int displayReport(int mathematicsScore, int physicsScore, int chemistryScore, int englishScore, int electronicsScore);
